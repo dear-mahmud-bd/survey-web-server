@@ -27,10 +27,20 @@ async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
         // await client.connect();
+        
+        const surveyCollection = client.db('SURVEY_APP_DB').collection('all_survey');
 
 
-        app.get('/a', (req, res) => {
-            res.send('show A')
+        // Get all surveys ...
+        app.get('/all-survey', async (req, res) => {
+            // const serviceName = req.query.survey_name;
+            let query = {};
+            // if (surveyName) {
+            //     query.surveyName = { $regex: surveyName, $options: 'i' };
+            // }
+            const cursor = surveyCollection.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
         })
 
 
