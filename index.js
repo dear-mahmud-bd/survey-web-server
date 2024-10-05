@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const app = express()
 const port = process.env.PORT || 5000;
@@ -27,7 +27,7 @@ async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
         // await client.connect();
-        
+
         const surveyCollection = client.db('SURVEY_APP_DB').collection('all_survey');
 
 
@@ -40,6 +40,17 @@ async function run() {
             // }
             const cursor = surveyCollection.find(query);
             const result = await cursor.toArray();
+            res.send(result);
+        })
+
+        // Get a specific survey ...
+        app.get('/all-survey/:_id', async (req, res) => {
+            const id = req.params._id;
+            if (!ObjectId.isValid(id)) {
+                return res.status(400).send({ message: 'Invalid ID format. ID must be a 24-character hexadecimal string.' });
+            }
+            const query = { _id: new ObjectId(id) };
+            const result = await surveyCollection.findOne(query);
             res.send(result);
         })
 
