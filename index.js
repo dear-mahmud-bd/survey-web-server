@@ -55,6 +55,18 @@ async function run() {
         })
 
 
+        // Get Recent Survey ...
+        app.get('/recent-surveys', async (req, res) => {
+            const result = await surveyCollection.find({}).sort({ createdISO: -1 }).limit(6).toArray();
+            res.send(result);
+        });
+        
+        // Get Most Voted Survey ...
+        app.get('/mostvoted-surveys', async (req, res) => {
+            const result = await surveyCollection.find({}).sort({ total_vote: -1 }).limit(6).toArray();
+            res.send(result);
+        });
+
 
 
 
