@@ -83,7 +83,29 @@ async function run() {
             res.send(result);
         });
 
-
+        // update vote count and add user email...
+        app.put('/all-survey/:_id', async (req, res) => {
+            const id = req.params._id;
+            const filter = { _id: new ObjectId(id) };
+            const options = { upsert: true };
+            const updateSurvey = req.body;
+            const survey = await surveyCollection.findOne(filter);
+            const isYesVote = updateSurvey.vote === 'yes';
+            const updatedVoteCount = (isYesVote ? (survey.yes_vote || 0) : (survey.no_vote || 0)) + 1;
+            const voteField = isYesVote ? 'yes_vote' : 'no_vote';
+            const surveyDoc = {
+                $set: {
+                    total_vote: (survey.total_vote || 0) + 1, 
+                    [voteField]: updatedVoteCount 
+                },
+                $addToSet: {
+                    voters: updateSurvey.email 
+                }
+            };
+            console.log(surveyDoc);
+            const result = await surveyCollection.updateOne(filter, surveyDoc, options);
+            res.send(result);
+        });
 
 
 
