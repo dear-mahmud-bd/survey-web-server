@@ -44,7 +44,14 @@ async function run() {
             const result = await userCollection.insertOne(user);
             res.send(result);
         });
-
+        // pro_users related api ...
+        app.get('/users/pro_user/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const user = await userCollection.findOne(query);
+            // console.log(user?.pro_user);
+            res.send({ pro_user: user?.pro_user });
+        })
 
 
 
@@ -82,7 +89,6 @@ async function run() {
             const result = await surveyCollection.find({}).sort({ total_vote: -1 }).limit(6).toArray();
             res.send(result);
         });
-
         // update vote count and add user email...
         app.put('/all-survey/:_id', async (req, res) => {
             const id = req.params._id;
@@ -95,11 +101,11 @@ async function run() {
             const voteField = isYesVote ? 'yes_vote' : 'no_vote';
             const surveyDoc = {
                 $set: {
-                    total_vote: (survey.total_vote || 0) + 1, 
-                    [voteField]: updatedVoteCount 
+                    total_vote: (survey.total_vote || 0) + 1,
+                    [voteField]: updatedVoteCount
                 },
                 $addToSet: {
-                    voters: updateSurvey.email 
+                    voters: updateSurvey.email
                 }
             };
             console.log(surveyDoc);
