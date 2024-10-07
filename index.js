@@ -29,6 +29,7 @@ async function run() {
 
         const userCollection = client.db('SURVEY_APP_DB').collection('all_user');
         const surveyCollection = client.db('SURVEY_APP_DB').collection('all_survey');
+        const reportCollection = client.db('SURVEY_APP_DB').collection('all_report');
 
 
 
@@ -112,7 +113,6 @@ async function run() {
             const result = await surveyCollection.updateOne(filter, surveyDoc, options);
             res.send(result);
         });
-
         // add a new comment to a specific survey
         app.patch('/all-survey/:_id', async (req, res) => {
             const id = req.params._id;
@@ -129,6 +129,16 @@ async function run() {
             // console.log(result);
             res.send(result);
         });
+
+        // add report api...
+        app.post('/report-survey', async (req, res) => {
+            const report = req.body;
+            console.log(report);
+            const result = await reportCollection.insertOne(report);
+            res.send(result);
+            
+        });
+
 
 
 
