@@ -113,6 +113,24 @@ async function run() {
             res.send(result);
         });
 
+        // add a new comment to a specific survey
+        app.patch('/all-survey/:_id', async (req, res) => {
+            const id = req.params._id;
+            const filter = { _id: new ObjectId(id) };
+            const survey = await surveyCollection.findOne(filter);
+            const { name, comment_date, comment } = req.body;
+            const newComment = {
+                user_name: name,
+                comment_date: comment_date,
+                message: comment
+            };
+            const addComment = { $push: { comments: newComment } };
+            const result = await surveyCollection.updateOne(filter, addComment);
+            // console.log(result);
+            res.send(result);
+        });
+
+
 
 
         // Send a ping to confirm a successful connection
