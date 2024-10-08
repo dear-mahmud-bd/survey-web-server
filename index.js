@@ -33,6 +33,25 @@ async function run() {
 
 
 
+        // Get all surveys ...
+        app.get('/all-users', async (req, res) => {
+            let query = {};
+            const cursor = userCollection.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
+        // get user role (TODO: _ _ _ )...
+        app.get('/all-users/:_id', async (req, res) => {
+            const id = req.params._id;
+            if (!ObjectId.isValid(id)) {
+                return res.status(400).send({ message: 'Invalid ID format. ID must be a 24-character hexadecimal string.' });
+            }
+            const query = { _id: new ObjectId(id) };
+            const result = await userCollection.findOne(query);
+            res.send(result);
+        })
+        
         // add user when Register a user...
         app.post('/users', async (req, res) => {
             const user = req.body;
@@ -45,6 +64,18 @@ async function run() {
             const result = await userCollection.insertOne(user);
             res.send(result);
         });
+        // change user role...
+        app.put('/user-role/:_id', async (req, res) => {
+            const id = req.params._id;
+            if (!ObjectId.isValid(id)) {
+                return res.status(400).send({ message: 'Invalid ID format. ID must be a 24-character hexadecimal string.' });
+            }
+            const role = req.body.role;
+            const query = { _id: new ObjectId(id) };
+            const update_role = { $set: { user_role: role } };
+            const result = await userCollection.updateOne(query, update_role);
+            res.send(result);
+        });
         // pro_users related api ...
         app.get('/users/pro_user/:email', async (req, res) => {
             const email = req.params.email;
@@ -52,7 +83,7 @@ async function run() {
             const user = await userCollection.findOne(query);
             // console.log(user?.pro_user);
             res.send({ pro_user: user?.pro_user });
-        })
+        });
 
 
 
@@ -136,7 +167,7 @@ async function run() {
             console.log(report);
             const result = await reportCollection.insertOne(report);
             res.send(result);
-            
+
         });
 
 
