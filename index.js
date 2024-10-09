@@ -33,7 +33,7 @@ async function run() {
 
 
 
-        // Get all surveys ...
+        // Get all users ...
         app.get('/all-users', async (req, res) => {
             let query = {};
             const cursor = userCollection.find(query);
@@ -51,7 +51,7 @@ async function run() {
             const result = await userCollection.findOne(query);
             res.send(result);
         })
-        
+
         // add user when Register a user...
         app.post('/users', async (req, res) => {
             const user = req.body;
@@ -84,6 +84,26 @@ async function run() {
             // console.log(user?.pro_user);
             res.send({ pro_user: user?.pro_user });
         });
+        // admin api ...
+        app.get('/users/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const user = await userCollection.findOne(query);
+            let admin = false;
+            if (user) admin = user?.user_role === 'admin';
+            // console.log(user, admin);
+            res.send({ admin });
+        })
+        // surveyor api ...
+        app.get('/users/surveyor/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const user = await userCollection.findOne(query);
+            let surveyor = false;
+            if (user) surveyor = user?.user_role === 'surveyor';
+            // console.log(user, surveyor);
+            res.send({ surveyor });
+        })
 
 
 
@@ -160,6 +180,9 @@ async function run() {
             // console.log(result);
             res.send(result);
         });
+        
+
+
 
         // add report api...
         app.post('/report-survey', async (req, res) => {
@@ -167,7 +190,6 @@ async function run() {
             console.log(report);
             const result = await reportCollection.insertOne(report);
             res.send(result);
-
         });
 
 
