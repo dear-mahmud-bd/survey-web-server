@@ -29,7 +29,11 @@ async function run() {
 
         const userCollection = client.db('SURVEY_APP_DB').collection('all_user');
         const surveyCollection = client.db('SURVEY_APP_DB').collection('all_survey');
+        const surveyVoteCollection = client.db('SURVEY_APP_DB').collection('survey_votes');
         const reportCollection = client.db('SURVEY_APP_DB').collection('all_report');
+        const commentCollection = client.db('SURVEY_APP_DB').collection('all_comment');
+
+
 
 
 
@@ -40,7 +44,6 @@ async function run() {
             const result = await cursor.toArray();
             res.send(result);
         })
-
         // get user role (TODO: _ _ _ )...
         app.get('/all-users/:_id', async (req, res) => {
             const id = req.params._id;
@@ -51,7 +54,6 @@ async function run() {
             const result = await userCollection.findOne(query);
             res.send(result);
         })
-
         // add user when Register a user...
         app.post('/users', async (req, res) => {
             const user = req.body;
@@ -109,7 +111,6 @@ async function run() {
 
 
 
-
         // add a survey in database ...
         app.post('/all-survey', async (req, res) => {
             const survey = req.body;
@@ -155,19 +156,14 @@ async function run() {
             const options = { upsert: true };
             const updateSurvey = req.body;
             const survey = await surveyCollection.findOne(filter);
-            const isYesVote = updateSurvey.vote === 'yes';
-            const updatedVoteCount = (isYesVote ? (survey.yes_vote || 0) : (survey.no_vote || 0)) + 1;
-            const voteField = isYesVote ? 'yes_vote' : 'no_vote';
+            // const isYesVote = updateSurvey.vote === 'yes';
+            // const updatedVoteCount = (isYesVote ? (survey.yes_vote || 0) : (survey.no_vote || 0)) + 1;
+            // const voteField = isYesVote ? 'yes_vote' : 'no_vote';
+            console.log(survey);
             const surveyDoc = {
-                $set: {
-                    total_vote: (survey.total_vote || 0) + 1,
-                    [voteField]: updatedVoteCount
-                },
-                $addToSet: {
-                    voters: updateSurvey.email
-                }
+                $set: { total_vote: (survey.total_vote || 0) + 1, /* [voteField]: updatedVoteCount */ },
+                $addToSet: { voters: updateSurvey.email }
             };
-            console.log(surveyDoc);
             const result = await surveyCollection.updateOne(filter, surveyDoc, options);
             res.send(result);
         });
@@ -199,11 +195,38 @@ async function run() {
 
 
 
+
+
+        // survey vote submition for another api...
+        app.put('/survey-vote/:surveyId', async (req, res) => {
+            const id = req.params.surveyId;
+            const voter = req.body;
+            const filter = { surveyId: id };
+            const options = { upsert: true };
+            // const voteIncrement = voter?.vote === 'yes' ? { yes_count: 1 } : { no_count: 1 };
+            const voteIncrement = voter.vote === 'yes' ? { $inc: { yes_count: 1 } } : { $inc: { no_count: 1 } };
+            // console.log(voter);
+            // console.log("Type", voteIncrement);
+            const updatedSurveyVote = {
+                ...voteIncrement,
+                $push: { voters: { name: voter.name, email: voter.email, type: voter.vote } }
+            };
+            // console.log(updatedSurveyVote);
+            const result = await surveyVoteCollection.updateOne(filter, updatedSurveyVote, options);
+            res.send(result);
+        });
         // add report api...
         app.post('/report-survey', async (req, res) => {
             const report = req.body;
             // console.log(report);
             const result = await reportCollection.insertOne(report);
+            res.send(result);
+        });
+        // add comment api...
+        app.post('/comment-survey', async (req, res) => {
+            const comment = req.body;
+            // console.log(comment);
+            const result = await commentCollection.insertOne(comment);
             res.send(result);
         });
 
