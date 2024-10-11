@@ -110,6 +110,13 @@ async function run() {
 
 
 
+        // add a survey in database ...
+        app.post('/all-survey', async (req, res) => {
+            const survey = req.body;
+            // console.log(survey);
+            const result = await surveyCollection.insertOne(survey);
+            res.send(result);
+        })
         // Get all surveys ...
         app.get('/all-survey', async (req, res) => {
             // const serviceName = req.query.survey_name;
@@ -180,14 +187,22 @@ async function run() {
             // console.log(result);
             res.send(result);
         });
-        
+        // get specific user's survey as a surveyor...
+        app.get('/my-survey/:email', async (req, res) => {
+            const email = req.params.email;
+            // console.log(email);
+            const query = { createdBy: email };
+            const result = await surveyCollection.find(query).toArray();
+            // const result = await surveyCollection.findOne(query);
+            res.send(result);
+        })
 
 
 
         // add report api...
         app.post('/report-survey', async (req, res) => {
             const report = req.body;
-            console.log(report);
+            // console.log(report);
             const result = await reportCollection.insertOne(report);
             res.send(result);
         });
