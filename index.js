@@ -139,6 +139,26 @@ async function run() {
             const result = await surveyCollection.findOne(query);
             res.send(result);
         })
+        // Update a specific survey with surveyors...
+        app.put('/my-survey/:_id', async (req, res) => {
+            const id = req.params._id;
+            const filter = { _id: new ObjectId(id) };
+            const options = { upsert: true };
+            const updateSurvey = req.body;
+            // console.log(updateSurvey);
+            const survey = {
+                $set: {
+                    title: updateSurvey.title,
+                    question: updateSurvey.question,
+                    description: updateSurvey.description,
+                    category: updateSurvey.category,
+                    deadline: updateSurvey.surveyDeadline,
+                    deadlineISO: updateSurvey.deadlineISO,
+                }
+            };
+            const result = await surveyCollection.updateOne(filter, survey, options);
+            res.send(result);
+        })
         // Get Recent Survey ...
         app.get('/recent-surveys', async (req, res) => {
             const result = await surveyCollection.find({}).sort({ createdISO: -1 }).limit(6).toArray();
@@ -152,17 +172,17 @@ async function run() {
         // update vote count and add user email...
         app.put('/all-survey/:_id', async (req, res) => {
             const id = req.params._id;
+            const { email } = req.body;
+            // console.log("Put-", id);
+
             const filter = { _id: new ObjectId(id) };
-            const options = { upsert: true };
-            const updateSurvey = req.body;
-            const survey = await surveyCollection.findOne(filter);
-            // const isYesVote = updateSurvey.vote === 'yes';
-            // const updatedVoteCount = (isYesVote ? (survey.yes_vote || 0) : (survey.no_vote || 0)) + 1;
-            // const voteField = isYesVote ? 'yes_vote' : 'no_vote';
-            console.log(survey);
+            // const options = { upsert: true };
+            const options = { returnDocument: 'after' };
+            
+            // console.log(survey);
             const surveyDoc = {
-                $set: { total_vote: (survey.total_vote || 0) + 1, /* [voteField]: updatedVoteCount */ },
-                $addToSet: { voters: updateSurvey.email }
+                $inc: { total_vote: 1 }, 
+                $addToSet: { voters: email }
             };
             const result = await surveyCollection.updateOne(filter, surveyDoc, options);
             res.send(result);
@@ -215,6 +235,17 @@ async function run() {
             const result = await surveyVoteCollection.updateOne(filter, updatedSurveyVote, options);
             res.send(result);
         });
+        // get specific survey result data...
+        app.get('/survey-result/:surveyId', async (req, res) => {
+            const surveyId = req.params.surveyId;
+            // survey_votes surveyVoteCollection 
+            const query = { surveyId: surveyId };
+            const surveyResult = await surveyVoteCollection.findOne(query);
+            // console.log(surveyResult?.voters);
+            res.send(surveyResult?.voters);
+        })
+
+
         // add report api...
         app.post('/report-survey', async (req, res) => {
             const report = req.body;
