@@ -178,10 +178,10 @@ async function run() {
             const filter = { _id: new ObjectId(id) };
             // const options = { upsert: true };
             const options = { returnDocument: 'after' };
-            
+
             // console.log(survey);
             const surveyDoc = {
-                $inc: { total_vote: 1 }, 
+                $inc: { total_vote: 1 },
                 $addToSet: { voters: email }
             };
             const result = await surveyCollection.updateOne(filter, surveyDoc, options);
@@ -244,8 +244,28 @@ async function run() {
             // console.log(surveyResult?.voters);
             res.send(surveyResult?.voters);
         })
+        // get specific user's perticipation...
+        app.get('/users-participation/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { "voters.email": email };
+            const userParticipation = await surveyVoteCollection.find(query).toArray();
+            const userVotes = [];
+            for (const survey of userParticipation) {
+                const voterInfo = survey.voters.find(voter => voter.email === email);
+                // Find the corresponding survey in the surveyCollection by its surveyId
+                const surveyDetails = await surveyCollection.findOne({ _id: new ObjectId(survey.surveyId) });
+                if (surveyDetails) {
+                    userVotes.push({ surveyId: survey.surveyId, title: surveyDetails.title, type: voterInfo?.type });
+                }
+            }
+            res.status(200).json(userVotes);
+        });
+
+        
+        
 
 
+        
         // add report api...
         app.post('/report-survey', async (req, res) => {
             const report = req.body;
@@ -253,6 +273,15 @@ async function run() {
             const result = await reportCollection.insertOne(report);
             res.send(result);
         });
+        // get specific user's repotr as a user...
+        app.get('/user-report/:email', async (req, res) => {
+            const email = req.params.email;
+            // console.log(email);
+            const query = { email: email };
+            const result = await reportCollection.find(query).toArray();
+            res.send(result);
+        })
+
         // add comment api...
         app.post('/comment-survey', async (req, res) => {
             const comment = req.body;
