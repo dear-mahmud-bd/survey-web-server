@@ -30,6 +30,7 @@ async function run() {
         const userCollection = client.db('SURVEY_APP_DB').collection('all_user');
         const surveyCollection = client.db('SURVEY_APP_DB').collection('all_survey');
         const surveyVoteCollection = client.db('SURVEY_APP_DB').collection('survey_votes');
+        const surveyFeedbackCollection = client.db('SURVEY_APP_DB').collection('all_feedback');
         const reportCollection = client.db('SURVEY_APP_DB').collection('all_report');
         const commentCollection = client.db('SURVEY_APP_DB').collection('all_comment');
 
@@ -212,6 +213,16 @@ async function run() {
             // const result = await surveyCollection.findOne(query);
             res.send(result);
         })
+        // publish and unpublish the survey...
+        app.patch('/survey-status/:_id', async (req, res) => {
+            const id = req.params._id;
+            const status = req.body.value;
+            // console.log("Status:-----------",id,status);
+            const filter = { _id: new ObjectId(id) };
+            const updateDoc = { $set: { status: status } };
+            const result = await surveyCollection.updateOne(filter, updateDoc);
+            res.send(result);
+        });
 
 
 
@@ -261,11 +272,11 @@ async function run() {
             res.status(200).json(userVotes);
         });
 
-        
-        
 
 
-        
+
+
+
         // add report api...
         app.post('/report-survey', async (req, res) => {
             const report = req.body;
@@ -281,7 +292,18 @@ async function run() {
             const result = await reportCollection.find(query).toArray();
             res.send(result);
         })
+        // post unpublish report...  surveyFeedbackCollection 
+        app.post('/survey-feedback', async (req, res) => {
+            const feedback = req.body;
+            // console.log("Feedback:-----------",feedback);
+            const result = await surveyFeedbackCollection.insertOne(feedback);
+            res.send(result);
+        });
 
+
+
+
+        
         // add comment api...
         app.post('/comment-survey', async (req, res) => {
             const comment = req.body;
@@ -289,6 +311,14 @@ async function run() {
             const result = await commentCollection.insertOne(comment);
             res.send(result);
         });
+        // get specific user comment api...
+        app.get('/comment-survey/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const userComments = await commentCollection.find(query).toArray();
+            res.send(userComments);
+        });
+
 
 
 
