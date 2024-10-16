@@ -3,7 +3,8 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
-const app = express()
+const app = express();
+const stripe = require("stripe")(process.env.STRIPE_KEY);
 const port = process.env.PORT || 5000;
 
 // middleware
@@ -33,6 +34,7 @@ async function run() {
         const surveyFeedbackCollection = client.db('SURVEY_APP_DB').collection('all_feedback');
         const reportCollection = client.db('SURVEY_APP_DB').collection('all_report');
         const commentCollection = client.db('SURVEY_APP_DB').collection('all_comment');
+        const paymentCollection = client.db('SURVEY_APP_DB').collection('all_payment');
 
 
 
@@ -299,11 +301,19 @@ async function run() {
             const result = await surveyFeedbackCollection.insertOne(feedback);
             res.send(result);
         });
+        // get survey feedback from unpublish report...  surveyFeedbackCollection 
+        app.get('/survey-feedback/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            // console.log("Feedback:-----------",feedback);
+            const result = await surveyFeedbackCollection.find(query).toArray();
+            res.send(result);
+        });
 
 
 
 
-        
+
         // add comment api...
         app.post('/comment-survey', async (req, res) => {
             const comment = req.body;
@@ -323,6 +333,30 @@ async function run() {
 
 
 
+        // payment intent
+        app.post('/create-payment-intent', async (req, res) => {
+            const { price } = req.body;
+            const amount = parseInt(price * 100);
+            // console.log('amount inside the intent', amount)
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card'],
+                description: "Purchase of premium subscription",
+            });
+            res.send({ clientSecret: paymentIntent.client_secret })
+        });
+        // make payment to update pro-user
+        app.post('/payments', async (req, res) => {
+            const payment = req.body;
+            const email = payment.email;
+            console.log(email, payment);
+            const paymentResult = await paymentCollection.insertOne(payment);
+            const query = { email: email };
+            const updateDoc = { $set: { pro_user: true } };
+            const userResult = await userCollection.updateOne(query, updateDoc);
+            res.send({ paymentResult, userResult });
+        });
 
         // Send a ping to confirm a successful connection
         // await client.db("admin").command({ ping: 1 });
