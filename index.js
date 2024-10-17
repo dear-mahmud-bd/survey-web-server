@@ -254,8 +254,24 @@ async function run() {
             // survey_votes surveyVoteCollection 
             const query = { surveyId: surveyId };
             const surveyResult = await surveyVoteCollection.findOne(query);
-            // console.log(surveyResult?.voters);
-            res.send(surveyResult?.voters);
+            // console.log(surveyResult);
+            res.send(surveyResult);
+        })
+        // get specific survey result data...
+        app.get('/voter-result/:surveyId', async (req, res) => {
+            const surveyId = req.params.surveyId;
+            const surveyQuery = { _id: new ObjectId(surveyId) };
+            const surveyDetails = await surveyCollection.findOne(surveyQuery);
+            // survey_votes surveyVoteCollection 
+            const query = { surveyId: surveyId };
+            const surveyResult = await surveyVoteCollection.findOne(query);
+            const result = {
+                title: surveyDetails.title,
+                category: surveyDetails.category,
+                yes_count: surveyResult?.yes_count || 0,
+                no_count: surveyResult?.no_count || 0
+            };
+            res.send(result);
         })
         // get specific user's perticipation...
         app.get('/users-participation/:email', async (req, res) => {
@@ -356,6 +372,22 @@ async function run() {
             const updateDoc = { $set: { pro_user: true } };
             const userResult = await userCollection.updateOne(query, updateDoc);
             res.send({ paymentResult, userResult });
+        });
+        // get all payment history from admin ...
+        app.get('/payments', async (req, res) => {
+            let query = {};
+            const cursor = paymentCollection.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        });
+        // get specific users payment history  ...
+        app.get('/payments/:email', async (req, res) => {
+            const email = req.params.email;
+            // console.log(email);
+            const query = { email: email };
+            const cursor = paymentCollection.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
         });
 
         // Send a ping to confirm a successful connection
